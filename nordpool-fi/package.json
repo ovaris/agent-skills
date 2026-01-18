@@ -1,0 +1,16 @@
+{
+  "name": "nordpool-fi",
+  "version": "1.0.0",
+  "description": "Hourly electricity prices for Finland (Nord Pool) with EV charging window optimization.",
+  "author": "Olli Varis",
+  "license": "MIT",
+  "keywords": [
+    "nordpool",
+    "electricity",
+    "finland",
+    "energy",
+    "pörssisähkö",
+    "ev-charging"
+  ],
+  "homepage": "https://github.com/ovaris/agent-skills/tree/main/nordpool-fi"
+}
