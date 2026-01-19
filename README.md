@@ -9,6 +9,11 @@ Fetches hourly electricity prices for the Finland region using the Porssisahko.n
 - **Features:** Automatic UTC to Finland time conversion, 15-min data averaging, and optimal charging window calculation (3h, 4h, 5h).
 - **Usage:** Perfect for home automation and EV charging optimization.
 
+### 🚗 [tesla-commands](./tesla-commands)
+Control your Tesla vehicle via the MyTeslaMate API.
+- **Features:** Wake up vehicle, check battery status/location, set charge limits, and manage climate/schedules.
+- **Usage:** Designed for multi-vehicle account support and automation.
+
 ---
 
 ## How to use
