@@ -6,13 +6,18 @@ from datetime import datetime, timedelta, timezone
 
 def get_data():
     url = "https://api.porssisahko.net/v2/latest-prices.json"
-    with urllib.request.urlopen(url) as response:
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req) as response:
         return json.loads(response.read().decode())
 
-def to_local(utc_str):
+def parse_utc(utc_str):
+    return datetime.fromisoformat(utc_str.replace('Z', '+00:00'))
+
+def to_local(dt):
     # Finland: UTC+2 (Winter), UTC+3 (Summer)
-    # This detects the offset automatically based on the system or fixed offset
-    dt = datetime.fromisoformat(utc_str.replace('Z', '+00:00'))
     return dt.astimezone(timezone(timedelta(hours=2)))
 
 def find_best_window(prices, window_size):
@@ -37,12 +42,22 @@ def find_best_window(prices, window_size):
 def main():
     try:
         data = get_data()
-        now = datetime.now(timezone(timedelta(hours=2)))
+        now_utc = datetime.now(timezone.utc)
+        now_local = to_local(now_utc)
         
-        # Group and calculate hourly averages (Finland time)
+        # 1. Find the EXACT current 15-min price
+        current_interval_price = None
+        for p in data['prices']:
+            start = parse_utc(p['startDate'])
+            end = parse_utc(p['endDate'])
+            if start <= now_utc < end:
+                current_interval_price = p['price']
+                break
+
+        # 2. Group and calculate hourly averages (Finland time) for stats and windows
         hourly = {}
         for p in data['prices']:
-            local_dt = to_local(p['startDate'])
+            local_dt = to_local(parse_utc(p['startDate']))
             hour_key = local_dt.strftime('%Y-%m-%d %H:00')
             if hour_key not in hourly:
                 hourly[hour_key] = []
@@ -53,17 +68,15 @@ def main():
             averages.append({"time": h, "price": sum(prices)/len(prices)})
         averages.sort(key=lambda x: x['time'])
 
-        # Filter only future prices (from current hour onwards)
-        now_hour = now.replace(minute=0, second=0, microsecond=0)
+        # Filter future hourly prices
+        now_hour = now_local.replace(minute=0, second=0, microsecond=0)
         future_prices = [a for a in averages if datetime.strptime(a['time'], '%Y-%m-%d %H:00').replace(tzinfo=timezone(timedelta(hours=2))) >= now_hour]
 
-        today_str = now.strftime('%Y-%m-%d')
-        tomorrow_str = (now + timedelta(days=1)).strftime('%Y-%m-%d')
-        
-        current_price = next((a['price'] for a in averages if a['time'] == now.strftime('%Y-%m-%d %H:00')), None)
+        today_str = now_local.strftime('%Y-%m-%d')
         
         result = {
-            "current_price": current_price,
+            "current_price": current_interval_price,
+            "current_hour_avg": next((a['price'] for a in averages if a['time'] == now_local.strftime('%Y-%m-%d %H:00')), None),
             "best_charging_windows": {
                 "3h": find_best_window(future_prices, 3),
                 "4h": find_best_window(future_prices, 4),
