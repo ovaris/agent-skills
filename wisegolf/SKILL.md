@@ -218,6 +218,24 @@ Practical interpretation:
 
 For ambiguous booking requests, do not silently pick an unusual product. Use the default 18-hole product only when that default is explicitly established for the club or local config.
 
+When a club returns HTTP 500 for a minimal booking payload, do not keep guessing field-by-field. Use the richer payload shape and supporting script in this skill:
+
+- `scripts/book_tee_time.py` for a reusable booking flow
+- `references/hirsala.md` for an example of a club that requires a fuller request body
+
+Fields that are especially worth preserving from working web-app traffic at stricter clubs:
+
+- product-level `quantity`
+- `reservation.reservationId`
+- `reservation.title`
+- `reservation.duration` and `reservation.fullDuration`
+- `reservation.quantity`
+- `reservation.recurringReservation`
+- resource-level `quantity`
+- `golfPlayers` as an array
+- player `age` when available or derivable
+- `checkedComments` as an empty array when nothing is selected
+
 ## User reservations
 
 Fetch the user's golf reservations with:
@@ -255,6 +273,8 @@ Interpretation:
 - `appauth` is required request context for this AJAX endpoint
 
 Be careful: removing by `reservationtimeid` is destructive. Double-check the target player and tee time before using it.
+
+Use `scripts/cancel_tee_time.py` when you want a reusable cancellation flow instead of reconstructing the AJAX call by hand.
 
 ## Privacy note
 
