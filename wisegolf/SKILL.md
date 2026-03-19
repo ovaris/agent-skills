@@ -26,8 +26,39 @@ Typical values needed:
 - app ID
 - API/app version
 - `appauth`
-- default product IDs
+- preferred default booking product
 - important entitlement/category mappings
+
+## Product discovery and defaults
+
+Do not hardcode tee-time `productId` values when the club exposes product discovery.
+
+Fetch reservation-capable products with:
+
+```bash
+curl -s 'https://api.CLUB_DOMAIN/api/1.0/products/?type=6'
+```
+
+Use this to discover the club's current booking products before tee-time queries or booking flows.
+
+Practical guidance:
+
+- fetch products when product IDs are not already known with confidence
+- cache stable mappings in local config if useful, but prefer re-fetching over guessing
+- filter the returned list to the golf booking products relevant to the task
+- do not assume every `type=6` product is a golf tee-time product; some clubs may expose other reservation products such as padel
+
+For Hirsala-like naming, typical golf booking products may include names such as:
+
+- `Ajanvaraus 18r`
+- `Ajanvaraus 9r`
+- `Aamulähdöt 9r`
+
+Default interpretation for ambiguous booking requests:
+
+- if the user says only "book a tee time" / "varaa aika" and does not specify 9 holes vs 18 holes, default to the club's normal 18-hole booking product when one clearly exists
+- if there is no clear normal default, ask a clarifying question before booking
+- if the requested time appears to belong only to a specific product, treat that as a hint, but avoid silent assumptions for destructive or state-changing booking actions
 
 ## Tee time search
 
@@ -42,6 +73,13 @@ Inputs needed:
 - API domain
 - `productid`
 - date
+
+Before calling this endpoint, choose the correct booking product:
+
+- if the user explicitly says 18r / 18 holes, use the 18-hole booking product
+- if the user explicitly says 9r / 9 holes, use the 9-hole booking product
+- if the user gives no type and the club has a clear default, use that default
+- otherwise ask a clarifying question
 
 Use this to inspect how full the day is, how many players are in a specific departure, and what groups are ahead of the user's tee time.
 
@@ -172,10 +210,13 @@ Important fields commonly seen in working requests:
 
 Practical interpretation:
 
-- first identify the tee time and reservation resource details
+- first identify the correct booking product for the user's request
+- then identify the tee time and reservation resource details for that product
 - then identify each player and their eligible `accessRights`
 - when a player uses a named right/product, include the matching category as `addCategoryId`
 - include all booked golfers in `golfPersonIds`, even if each product row only carries one `golfPlayers` object
+
+For ambiguous booking requests, do not silently pick an unusual product. Use the default 18-hole product only when that default is explicitly established for the club or local config.
 
 ## User reservations
 
