@@ -1,0 +1,15 @@
+{
+  "name": "wisegolf",
+  "version": "0.1.0",
+  "description": "WiseGolf tee times, player lookup, booking creation, cancellation, and reservation inspection patterns.",
+  "author": "Olli Varis",
+  "license": "MIT",
+  "keywords": [
+    "wisegolf",
+    "golf",
+    "tee-times",
+    "booking",
+    "reservations"
+  ],
+  "homepage": "https://github.com/ovaris/agent-skills/tree/main/wisegolf"
+}
